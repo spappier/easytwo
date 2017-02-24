@@ -20,6 +20,7 @@ Options:
 
 import click
 import boto3
+import botocore
 
 
 INPUTS = {
@@ -73,13 +74,17 @@ def main(**kwargs):
     if len(filters) == 0:
         show_help_and_exit()
 
-    instances = boto3.resource('ec2').instances.filter(
-        InstanceIds=kwargs.pop('id'),
-        Filters=filters,
-    )
+    try:
+        instances = boto3.resource('ec2').instances.filter(
+            InstanceIds=kwargs.pop('id'),
+            Filters=filters,
+        )
 
-    for instance in instances:
-        click.echo(' '.join(format_output(instance, output)))
+        for instance in instances:
+            click.echo(' '.join(format_output(instance, output)))
+
+    except botocore.exceptions.ClientError as e:
+        click.echo(e)
 
 
 def show_help_and_exit():

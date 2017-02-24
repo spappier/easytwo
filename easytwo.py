@@ -26,6 +26,7 @@ INPUTS = {
     'private-ip': 'private-ip-address',
     'public-ip': 'ip-address',
     'ami': 'image-id',
+    'subnet': 'subnet-id',
     'vpc': 'vpc-id',
     'type': 'instance-type',
     'state': 'instance-state-name',

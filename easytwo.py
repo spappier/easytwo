@@ -69,14 +69,15 @@ def main(**kwargs):
 
     output = kwargs.pop('output') or ('id',)
 
+    instance_ids = kwargs.pop('id')
     filters = tuple(format_filters(kwargs))
 
-    if len(filters) == 0:
+    if len(filters) == 0 and len(instance_ids) == 0:
         show_help_and_exit()
 
     try:
         instances = boto3.resource('ec2').instances.filter(
-            InstanceIds=kwargs.pop('id'),
+            InstanceIds=instance_ids,
             Filters=filters,
         )
 

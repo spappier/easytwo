@@ -37,6 +37,7 @@ INPUTS = {
 
 OUTPUTS = {
     'id': 'instance_id',
+    'name': 'name',
     'az': 'az',
     'state': 'state',
     'type': 'instance_type',
@@ -113,12 +114,23 @@ def format_output(instance, outputs):
     '''Extract and yield outputs for an instance.'''
 
     for output in outputs:
-        if output == 'az':
+        if output == 'name':
+            yield get_instance_tag_value(instance, 'Name')
+        elif output == 'az':
             yield get_instance_az(instance)
         elif output == 'state':
             yield get_instance_state(instance)
         else:
             yield getattr(instance, OUTPUTS[output])
+
+
+def get_instance_tag_value(instance, tag):
+    '''Extract the value of a given tag for the instance object.'''
+
+    try:
+        return [d['Value'] for d in instance.tags if d['Key'] == tag][0]
+    except IndexError:
+        return str()
 
 
 def get_instance_az(instance):

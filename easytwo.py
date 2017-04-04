@@ -122,7 +122,7 @@ def format_output(instance, outputs):
         elif output == 'state':
             yield get_instance_state(instance)
         else:
-            yield getattr(instance, OUTPUTS[output])
+            yield getattr(instance, OUTPUTS[output]) or 'none'
 
 
 def get_instance_tag_value(instance, tag):

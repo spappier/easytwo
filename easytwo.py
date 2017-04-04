@@ -56,6 +56,7 @@ def add_input_options(func):
 
     func = click.option('--output', multiple=True, type=output_choice)(func)
     func = click.option('--tag', metavar='TAG VALUE', nargs=2, multiple=True)(func)
+    func = click.option('--state', default=['running'], multiple=True, help='Instance State, defaults to running.')(func)
 
     for k in INPUTS:
         func = click.option('--{}'.format(k), metavar=k.upper(), multiple=True)(func)

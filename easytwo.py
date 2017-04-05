@@ -48,6 +48,8 @@ OUTPUTS = {
     'subnet': 'subnet_id',
 }
 
+DEFAULT_OUTPUT_VALUE = 'none'
+
 
 def add_input_options(func):
     '''Decorate command to add dynamic options.'''
@@ -122,7 +124,7 @@ def format_output(instance, outputs):
         elif output == 'state':
             yield get_instance_state(instance)
         else:
-            yield getattr(instance, OUTPUTS[output]) or 'none'
+            yield getattr(instance, OUTPUTS[output]) or DEFAULT_OUTPUT_VALUE
 
 
 def get_instance_tag_value(instance, tag):
@@ -130,8 +132,8 @@ def get_instance_tag_value(instance, tag):
 
     try:
         return [d['Value'] for d in instance.tags if d['Key'] == tag][0]
-    except IndexError:
-        return str()
+    except (IndexError, TypeError):
+        return DEFAULT_OUTPUT_VALUE
 
 
 def get_instance_az(instance):

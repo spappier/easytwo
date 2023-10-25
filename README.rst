@@ -26,12 +26,14 @@ Usage
       --state STATE
       --type TYPE
       --vpc VPC
+      --subnet SUBNET
       --ami AMI
       --public-ip PUBLIC-IP
       --private-ip PRIVATE-IP
+      --state TEXT                    Instance State, defaults to running.
       --tag TAG VALUE
-      --output [id|az|state|type|public-ip|private-ip|ami|vpc|subnet]
-      --help
+      --output [id|name|az|state|type|public-ip|private-ip|launch-time|ami|vpc|subnet]
+      --help                          Show this message and exit.
 
 Examples
 --------
@@ -50,7 +52,6 @@ Examples
     i-af9cb4acf2e57d3d0 running 10.0.1.8
     i-ed316aecb5fb2809d running 10.0.2.15
     i-fe9b5acc2fb40d1a7 stopped 10.0.1.16
-
 
 ::
 

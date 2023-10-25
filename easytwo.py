@@ -10,12 +10,14 @@ Options:
   --state STATE
   --type TYPE
   --vpc VPC
+  --subnet SUBNET
   --ami AMI
   --public-ip PUBLIC-IP
   --private-ip PRIVATE-IP
+  --state TEXT                    Instance State, defaults to running.
   --tag TAG VALUE
-  --output [id|az|state|type|public-ip|private-ip|ami|vpc|subnet]
-  --help
+  --output [id|name|az|state|type|public-ip|private-ip|launch-time|ami|vpc|subnet]
+  --help                          Show this message and exit.
 """
 
 import click

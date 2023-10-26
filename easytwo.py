@@ -1,4 +1,4 @@
-'''
+"""
 Usage: easytwo [OPTIONS]
 
   Easy EC2 Queries.
@@ -10,90 +10,98 @@ Options:
   --state STATE
   --type TYPE
   --vpc VPC
+  --subnet SUBNET
   --ami AMI
   --public-ip PUBLIC-IP
   --private-ip PRIVATE-IP
+  --state TEXT                    Instance State, defaults to running.
   --tag TAG VALUE
-  --output [id|az|state|type|public-ip|private-ip|ami|vpc|subnet]
-  --help
-'''
+  --output [id|name|az|state|type|public-ip|private-ip|launch-time|ami|vpc|subnet]
+  --help                          Show this message and exit.
+"""
 
 import click
 import boto3
 import botocore
 
+import extractors
+
 
 INPUTS = {
-    'private-ip': 'private-ip-address',
-    'public-ip': 'ip-address',
-    'ami': 'image-id',
-    'subnet': 'subnet-id',
-    'vpc': 'vpc-id',
-    'type': 'instance-type',
-    'state': 'instance-state-name',
-    'az': 'availability-zone',
-    'name': 'tag:Name',
+    "private-ip": "private-ip-address",
+    "public-ip": "ip-address",
+    "ami": "image-id",
+    "subnet": "subnet-id",
+    "vpc": "vpc-id",
+    "type": "instance-type",
+    "state": "instance-state-name",
+    "az": "availability-zone",
+    "name": "tag:Name",
 }
 
 OUTPUTS = {
-    'id': 'instance_id',
-    'name': 'name',
-    'az': 'az',
-    'state': 'state',
-    'type': 'instance_type',
-    'public-ip': 'public_ip_address',
-    'private-ip': 'private_ip_address',
-    'ami': 'image_id',
-    'vpc': 'vpc_id',
-    'subnet': 'subnet_id',
+    "id": extractors.default("instance_id"),
+    "name": extractors.tag("Name"),
+    "az": extractors.az,
+    "state": extractors.state,
+    "type": extractors.default("instance_type"),
+    "public-ip": extractors.default("public_ip_address"),
+    "private-ip": extractors.default("private_ip_address"),
+    "launch-time": extractors.launch_time,
+    "ami": extractors.default("image_id"),
+    "vpc": extractors.default("vpc_id"),
+    "subnet": extractors.default("subnet_id"),
 }
 
-DEFAULT_OUTPUT_VALUE = 'none'
+DEFAULT_OUTPUT_VALUE = "none"
 
 
 def add_input_options(func):
-    '''Decorate command to add dynamic options.'''
+    """Decorate command to add dynamic options."""
 
     output_choice = click.Choice(OUTPUTS.keys())
 
-    func = click.option('--output', multiple=True, type=output_choice)(func)
-    func = click.option('--tag', metavar='TAG VALUE', nargs=2, multiple=True)(func)
-    func = click.option('--state', default=['running'], multiple=True, help='Instance State, defaults to running.')(func)
+    func = click.option("--output", multiple=True, type=output_choice)(func)
+    func = click.option("--tag", metavar="TAG VALUE", nargs=2, multiple=True)(func)
+    func = click.option(
+        "--state",
+        default=["running"],
+        multiple=True,
+        help="Instance State, defaults to running.",
+    )(func)
 
     for k in INPUTS:
-        func = click.option('--{}'.format(k), metavar=k.upper(), multiple=True)(func)
+        func = click.option("--{}".format(k), metavar=k.upper(), multiple=True)(func)
 
-    return click.option('--id', multiple=True)(func)
+    return click.option("--id", multiple=True)(func)
 
 
 @click.command()
 @add_input_options
 def main(**kwargs):
-    '''Easy EC2 Queries.'''
+    """Easy EC2 Queries."""
 
-    output = kwargs.pop('output') or ('id',)
+    output = kwargs.pop("output") or ("id",)
 
-    instance_ids = kwargs.pop('id')
+    instance_ids = kwargs.pop("id")
     filters = tuple(format_filters(kwargs))
 
     if len(filters) == 0 and len(instance_ids) == 0:
         show_help_and_exit()
 
     try:
-        instances = boto3.resource('ec2').instances.filter(
-            InstanceIds=instance_ids,
-            Filters=filters,
+        instances = boto3.resource("ec2").instances.filter(
+            InstanceIds=instance_ids, Filters=filters
         )
 
         for instance in instances:
-            click.echo(' '.join(format_output(instance, output)))
-
+            click.echo(" ".join(format_output(instance, output)))
     except botocore.exceptions.ClientError as e:
         click.echo(e)
 
 
 def show_help_and_exit():
-    '''Show help and quit.'''
+    """Show help and quit."""
 
     ctx = click.get_current_context()
     click.echo(ctx.get_help())
@@ -101,48 +109,20 @@ def show_help_and_exit():
 
 
 def format_filters(filters):
-    '''Convert filters to boto3 format.'''
+    """Convert filters to boto3 format."""
 
-    for tag_name, tag_value in filters.pop('tag'):
-        yield dict(Name='tag:{}'.format(tag_name), Values=(tag_value,))
+    for tag_name, tag_value in filters.pop("tag"):
+        yield dict(Name="tag:{}".format(tag_name), Values=(tag_value,))
 
     for field, value in filters.items():
         if value == tuple():
             continue
 
-        yield dict(Name=INPUTS[field.replace('_', '-')], Values=value)
+        yield dict(Name=INPUTS[field.replace("_", "-")], Values=value)
 
 
 def format_output(instance, outputs):
-    '''Extract and yield outputs for an instance.'''
+    """Extract and yield outputs for an instance."""
 
     for output in outputs:
-        if output == 'name':
-            yield get_instance_tag_value(instance, 'Name')
-        elif output == 'az':
-            yield get_instance_az(instance)
-        elif output == 'state':
-            yield get_instance_state(instance)
-        else:
-            yield getattr(instance, OUTPUTS[output]) or DEFAULT_OUTPUT_VALUE
-
-
-def get_instance_tag_value(instance, tag):
-    '''Extract the value of a given tag for the instance object.'''
-
-    try:
-        return [d['Value'] for d in instance.tags if d['Key'] == tag][0]
-    except (IndexError, TypeError):
-        return DEFAULT_OUTPUT_VALUE
-
-
-def get_instance_az(instance):
-    '''Extract instance availability zone.'''
-
-    return instance.placement['AvailabilityZone']
-
-
-def get_instance_state(instance):
-    '''Extract instance state name.'''
-
-    return instance.state['Name']
+        yield OUTPUTS[output](instance) or DEFAULT_OUTPUT_VALUE
